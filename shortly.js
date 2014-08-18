@@ -1,8 +1,9 @@
 var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
+var session = require('express-session');
 var bodyParser = require('body-parser');
-
+var cookieParser = require('cookie-parser');
 
 var db = require('./app/config');
 var Users = require('./app/collections/users');
@@ -21,11 +22,25 @@ app.use(bodyParser.json());
 // Parse forms (signup/login)
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
+app.use(bodyParser());
+app.use(cookieParser('shhhh, very secret'));
+app.use(session());
 
+function restrict(req, res, next) {
+  console.log('restrict fn')
+  if (req.session.user) {
+    next();
+  } else {
+    console.log('redir')
+    req.session.error = 'Access denied!';
+    res.redirect('/login');
+  }
+}
 
-app.get('/', 
+app.get('/',  restrict,
 function(req, res) {
-  res.render('index');
+  res.send(200);
+  // res.render('index');
 });
 
 app.get('/create', 
@@ -77,7 +92,10 @@ function(req, res) {
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
-
+app.get('/login',  restrict,
+function(req, res) {
+  res.send(200, 'hi ');
+});
 
 
 /************************************************************/
