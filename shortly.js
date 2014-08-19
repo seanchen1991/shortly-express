@@ -3,7 +3,7 @@ var util = require('./lib/utility');
 var partials = require('express-partials');
 var session = require('express-session');
 var bodyParser = require('body-parser');
-var cookieParser = require('cookie-parser');
+// var cookieParser = require('cookie-parser');
 
 var db = require('./app/config');
 var Users = require('./app/collections/users');
@@ -23,15 +23,12 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 app.use(bodyParser());
-app.use(cookieParser('shhhh, very secret'));
-app.use(session());
+app.use(session({ secret:'shhhh, very secret' }));    // use the secret option here in session and pass in the newly created username and password
 
 function restrict(req, res, next) {
-  console.log('restrict fn')
   if (req.session.user) {
     next();
   } else {
-    console.log('redir')
     req.session.error = 'Access denied!';
     res.redirect('/login');
   }
@@ -39,16 +36,15 @@ function restrict(req, res, next) {
 
 app.get('/',  restrict,
 function(req, res) {
-  res.send(200);
-  // res.render('index');
+  res.render('index');
 });
 
-app.get('/create', 
+app.get('/create', restrict,
 function(req, res) {
   res.render('index');
 });
 
-app.get('/links', 
+app.get('/links', restrict,
 function(req, res) {
   Links.reset().fetch().then(function(links) {
     res.send(200, links.models);
@@ -81,6 +77,7 @@ function(req, res) {
         });
 
         link.save().then(function(newLink) {
+
           Links.add(newLink);
           res.send(200, newLink);
         });
@@ -92,9 +89,55 @@ function(req, res) {
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
-app.get('/login',  restrict,
+app.get('/login',
 function(req, res) {
-  res.send(200, 'hi ');
+  res.render('login');
+  // render
+});
+
+app.get('/signup',
+function(req, res) {
+  res.render('signup');
+  // render
+});
+
+
+app.post('/signup',
+function (req, res) {
+
+  var user = new User({
+    username: req.body.username,
+    password: req.body.password
+  });
+
+  user.save().then(function (newUser) {
+    
+    Users.add(newUser);
+    // create a session
+    req.session.user = true;
+    // redirect to main page
+      // -> main page expects a .session.user property
+    res.redirect('/');
+    
+  });
+});
+
+app.post('/login', 
+  function(req, res) {
+    new User({ username: req.body.username }).fetch().then(function(user) {
+      if (!user) {
+        res.redirect('/login');
+      } else {
+        req.session.user = true;
+        res.redirect('/');
+      }
+    });
+  });
+
+app.get('/logout',
+function(req, res) {
+  req.session.user = false;
+  res.redirect('/login');
 });
 
 

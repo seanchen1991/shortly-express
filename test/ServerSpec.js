@@ -13,7 +13,7 @@ var Link = require('../app/models/link');
 // Remove the 'x' from beforeEach block when working on
 // authentication tests.
 /************************************************************/
-var xbeforeEach = function(){};
+// var beforeEach = function(){};
 /************************************************************/
 
 
@@ -63,7 +63,7 @@ describe('', function() {
 
     var requestWithSession = request.defaults({jar: true});
 
-    xbeforeEach(function(done){      // create a user that we can then log-in with
+    beforeEach(function(done){      // create a user that we can then log-in with
       new User({
           'username': 'Phillip',
           'password': 'Phillip'
@@ -152,7 +152,7 @@ describe('', function() {
     describe('With previously saved urls:', function(){
 
       var link;
-
+      console.log('running describe block')
       beforeEach(function(done){
         // save a link to the database
         link = new Link({
@@ -163,23 +163,25 @@ describe('', function() {
         link.save().then(function(){
           done();
         });
+
       });
 
       it('Returns the same shortened code', function(done) {
-        var options = {
-          'method': 'POST',
-          'followAllRedirects': true,
-          'uri': 'http://127.0.0.1:4568/links',
-          'json': {
-            'url': 'http://www.roflzoo.com/'
-          }
-        };
+          var options = {
+            'method': 'POST',
+            'followAllRedirects': true,
+            'uri': 'http://127.0.0.1:4568/links',
+            'json': {
+              'url': 'http://www.roflzoo.com/'
+            }
+          };
 
-        requestWithSession(options, function(error, res, body) {
-          var code = res.body.code;
-          expect(code).to.equal(link.get('code'));
-          done();
-        });
+          requestWithSession(options, function(error, res, body) {
+            var code = res.body.code;
+            // console.log('link.get code: ', link.get('code'));
+            expect(code).to.equal(link.get('code'));
+            done();
+          });
       });
 
       it('Shortcode redirects to correct url', function(done) {
@@ -237,7 +239,7 @@ describe('', function() {
 
   }); // 'Priviledged Access'
 
-  xdescribe('Account Creation:', function(){
+  describe('Account Creation:', function(){
 
     it('Signup creates a user record', function(done) {
       var options = {
@@ -250,6 +252,7 @@ describe('', function() {
       };
 
       request(options, function(error, res, body) {
+
         db.knex('users')
           .where('username', '=', 'Svnh')
           .then(function(res) {
@@ -285,7 +288,7 @@ describe('', function() {
 
   }); // 'Account Creation'
 
-  xdescribe('Account Login:', function(){
+  describe('Account Login:', function(){
 
     var requestWithSession = request.defaults({jar: true});
 
